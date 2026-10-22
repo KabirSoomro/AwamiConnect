@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Department & Moderator Portal — AwamiConnect</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Disclaimer Banner -->
+  <div class="disclaimer-banner">
+    🔒 <strong>Authorized Access:</strong> Department & Moderator Portal. Manage civic reports, assign teams, and post resolution updates.
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="brand">
+        <div class="brand-icon">🏛️</div>
+        <span>AwamiConnect</span>
+      </a>
+
+      <button class="mobile-menu-btn" aria-label="Toggle Menu" aria-expanded="false">☰</button>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home & Dashboard</a></li>
+        <li><a href="report.html" class="nav-link">Report an Issue</a></li>
+        <li><a href="track.html" class="nav-link">Track Complaint</a></li>
+        <li><a href="admin.html" class="nav-link active">Department Portal</a></li>
+      </ul>
+
+      <div class="nav-actions" id="authNavActions">
+        <!-- Injected via JS (Login/Logout buttons) -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+    <!-- Login Screen (Shown when not authenticated) -->
+    <div id="loginScreen" style="max-width: 440px; margin: 3rem auto; text-align: center;">
+      <div class="card" style="padding: 2.5rem 2rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏛️</div>
+        <h2 style="font-size: 1.6rem; margin-bottom: 0.5rem;">Department Portal Login</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Sign in to review complaints, allocate field contractors, and verify civic repairs.
+        </p>
+
+        <form id="adminLoginForm">
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label">Official Email / ID</label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="officer@department.gov" required value="admin@awamiconnect.org" autocomplete="username">
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label">Password</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required value="admin123" autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" style="margin-top: 1rem;">
+            <span>🔑</span> Sign In to Portal
+          </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Evaluating or testing this project?</p>
+          <button type="button" class="btn btn-outline btn-sm btn-full" id="btnQuickDemoLogin">
+            ⚡ 1-Click Moderator Demo Access
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Authorized Admin Portal (Shown after login) -->
+    <div id="adminPortal" style="display: none;">
+      
+      <!-- Top Bar: Greeting & Controls -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">Department Management Console</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">
+            Logged in as <strong id="officerName" style="color: var(--primary);">Municipal Moderator</strong> (All Departments)
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" id="btnExportCsv">
+            📥 Export CSV
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="btnResetDemo">
+            🔄 Reset Demo Data
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="btnLogout" style="color: #b91c1c;">
+            🚪 Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="admin-metrics-grid">
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 0;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Reports</div>
+          <div id="adminTotalCount" style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary);">0</div>
+        </div>
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 0;">
+          <div style="font-size: 0.8rem; color: #ef4444; text-transform: uppercase; font-weight: 700;">Needs Review</div>
+          <div id="adminSubmittedCount" style="font-size: 1.75rem; font-weight: 800; color: #ef4444;">0</div>
+        </div>
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 0;">
+          <div style="font-size: 0.8rem; color: #d97706; text-transform: uppercase; font-weight: 700;">Assigned / Action</div>
+          <div id="adminAssignedCount" style="font-size: 1.75rem; font-weight: 800; color: #d97706;">0</div>
+        </div>
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 0;">
+          <div style="font-size: 0.8rem; color: #059669; text-transform: uppercase; font-weight: 700;">Resolved</div>
+          <div id="adminResolvedCount" style="font-size: 1.75rem; font-weight: 800; color: #059669;">0</div>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+          
+          <div style="flex: 2; min-width: 220px;">
+            <input type="text" id="adminSearchInput" class="form-control" placeholder="Search ID, title, citizen name, location...">
+          </div>
+
+          <div style="flex: 1; min-width: 150px;">
+            <select id="adminStatusFilter" class="form-select">
+              <option value="all">All Statuses</option>
+              <option value="submitted">🔴 Submitted</option>
+              <option value="under_review">🔵 Under Review</option>
+              <option value="assigned">🟡 Assigned</option>
+              <option value="resolved">🟢 Resolved</option>
+              <option value="rejected">⚪ Rejected</option>
+            </select>
+          </div>
+
+          <div style="flex: 1; min-width: 150px;">
+            <select id="adminCategoryFilter" class="form-select">
+              <option value="all">All Categories</option>
+              <option value="roads">Roads</option>
+              <option value="sanitation">Sanitation</option>
+              <option value="water">Water Supply</option>
+              <option value="electricity">Electricity</option>
+              <option value="drainage">Drainage</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-outline" id="btnClearFilters">
+            Reset Filters
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Complaints Management Table -->
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+          <table class="table" id="complaintsTable">
+            <thead>
+              <tr>
+                <th style="width: 70px;">Photo</th>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Title & Location</th>
+                <th>Citizen Details</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="complaintsTableBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Edit & Action Modal -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal-box" style="max-width: 650px;">
+      
+      <div class="modal-header">
+        <div style="min-width: 0; flex: 1;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 0.2rem; word-break: break-word; overflow-wrap: anywhere;" id="modalEditTitle">Manage Complaint</h3>
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); word-break: break-all;" id="modalEditId">AC-2026-000</span>
+        </div>
+        <button type="button" class="modal-close" id="modalCloseX">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Evidence Preview & Details -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <img id="modalEditPhoto" src="" alt="Proof" style="width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border);" />
+          <div style="flex: 1; min-width: 0; word-break: break-word; overflow-wrap: anywhere;">
+            <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; word-break: break-word; overflow-wrap: anywhere;" id="modalEditHeading">Title</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.35rem; word-break: break-word; overflow-wrap: anywhere;" id="modalEditLocation">Location</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); word-break: break-word; overflow-wrap: anywhere;" id="modalEditCitizen">Citizen</div>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; font-size: 0.85rem; border: 1px solid var(--border); min-width: 0;">
+          <strong>Citizen Description:</strong>
+          <p id="modalEditDesc" style="margin-top: 0.25rem; color: var(--text-secondary); white-space: pre-line; word-break: break-word; overflow-wrap: anywhere;">--</p>
+        </div>
+
+        <!-- Management Form -->
+        <form id="modalEditForm">
+          
+          <div class="modal-grid-2col">
+            
+            <!-- Update Status Dropdown -->
+            <div class="form-group">
+              <label class="form-label">Update Status <span class="required">*</span></label>
+              <select id="modalStatusSelect" class="form-select" required>
+                <option value="submitted">🔴 Submitted</option>
+                <option value="under_review">🔵 Under Review</option>
+                <option value="assigned">🟡 Assigned to Department</option>
+                <option value="resolved">🟢 Resolved & Closed</option>
+                <option value="rejected">⚪ Rejected (Invalid / Duplicate)</option>
+              </select>
+            </div>
+
+            <!-- Department Assignment -->
+            <div class="form-group">
+              <label class="form-label">Assign Department</label>
+              <select id="modalDepartmentSelect" class="form-select">
+                <option value="District Works & Highways">🛣️ District Works & Highways</option>
+                <option value="Solid Waste Management Corp">🗑️ Waste Management Corp</option>
+                <option value="Water & Sewerage Authority">💧 Water & Sewerage Authority</option>
+                <option value="City Electric Utility & Works">⚡ City Electric & Streetlights</option>
+                <option value="Drainage & Sanitation Directorate">🚰 Drainage & Sanitation</option>
+                <option value="General District Administration">🏛️ General Administration</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Official Resolution Remarks -->
+          <div class="form-group">
+            <label class="form-label">Official Department Remarks / Action Notes</label>
+            <textarea id="modalRemarksText" class="form-textarea" placeholder="Explain the actions taken, dispatched team details, or reasons for status change..."></textarea>
+          </div>
+
+          <!-- Proof of Resolution Image URL (Optional) -->
+          <div class="form-group">
+            <label class="form-label">Resolution Proof Image URL (Optional)</label>
+            <input type="url" id="modalProofUrl" class="form-control" placeholder="https://example.com/fixed-road.jpg">
+            <p class="form-help">Upload photo link of repaired infrastructure to show transparency.</p>
+          </div>
+
+        </form>
+
+      </div>
+
+      <div class="modal-footer admin-modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="btnDeleteComplaint" style="color: #ef4444; border-color: #fca5a5;">
+          🗑️ Delete Report
+        </button>
+        <div class="admin-modal-actions">
+          <button type="button" class="btn btn-outline" id="btnCancelEdit">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnSaveEdit">
+            <span>💾</span> Save Status & Updates
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      AwamiConnect Civic Project • Department & Municipal Management Portal
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Firebase SDK Compat CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AwamiConnect — Citizen Complaint & Civic Accountability Platform</title>
+  
+  <!-- Leaflet CSS (Free OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Chart.js for Public Stats -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Independent Civic Platform Disclaimer Banner -->
+  <div class="disclaimer-banner">
+    📢 <strong>Notice:</strong> AwamiConnect is an independent citizen reporting & civic accountability platform. Reports are compiled transparently to advocate for community improvements.
+  </div>
+
+  <!-- Header & Navigation -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="brand">
+        <div class="brand-icon">🏛️</div>
+        <span>AwamiConnect</span>
+      </a>
+
+      <button class="mobile-menu-btn" aria-label="Toggle Menu" aria-expanded="false">☰</button>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link active">Home & Dashboard</a></li>
+        <li><a href="report.html" class="nav-link">Report an Issue</a></li>
+        <li><a href="track.html" class="nav-link">Track Complaint</a></li>
+        <li><a href="admin.html" class="nav-link">Department Portal</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="report.html" class="btn btn-primary">
+          <span>📸</span> Report Problem
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span>✨</span> Empowering Citizens • Tracking Solutions
+        </div>
+        <h1 class="hero-title">Report Local Civic Issues. Track Real Progress.</h1>
+        <p class="hero-subtitle">
+          Encountered broken roads, overflowing garbage, water supply issues, or faulty streetlights? Report it with a photo & location. We track every issue publicly until it is resolved.
+        </p>
+
+        <!-- Fast Track Box -->
+        <div class="hero-track-box">
+          <input type="text" id="heroTrackInput" placeholder="Enter Complaint ID (e.g. AC-2026-001)...">
+          <button class="btn btn-accent" id="heroTrackBtn">
+            <span>🔍</span> Track Status
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- KPI Metric Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">📋</div>
+        <div>
+          <div class="stat-value" id="statTotal">--</div>
+          <div class="stat-label">Total Reported</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div>
+          <div class="stat-value" id="statResolved">--</div>
+          <div class="stat-label">Issues Resolved</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon amber">⏳</div>
+        <div>
+          <div class="stat-value" id="statPending">--</div>
+          <div class="stat-label">Under Action / Review</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">⚡</div>
+        <div>
+          <div class="stat-value" id="statAvgTime">3.2 Days</div>
+          <div class="stat-label">Avg. Resolution Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Civic Map Section -->
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">📍 Live City Civic Map</h2>
+          <p class="section-subtitle">Real-time geographical distribution of citizen complaints across neighborhoods.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <label style="font-size: 0.85rem; font-weight: 600;">Filter by Status:</label>
+          <select id="mapStatusFilter" class="form-select" style="width: auto; padding: 0.4rem 0.8rem;">
+            <option value="all">All Issues</option>
+            <option value="submitted">🔴 Submitted</option>
+            <option value="assigned">🟡 In Progress / Assigned</option>
+            <option value="resolved">🟢 Resolved</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 0.75rem;">
+        <div id="cityMap"></div>
+        
+        <!-- Map Legend -->
+        <div style="display: flex; gap: 1.5rem; justify-content: center; padding-top: 0.85rem; font-size: 0.85rem; flex-wrap: wrap;">
+          <span><span style="color: #ef4444;">●</span> <strong>Red:</strong> Submitted (Awaiting Review)</span>
+          <span><span style="color: #3b82f6;">●</span> <strong>Blue:</strong> Under Review</span>
+          <span><span style="color: #f59e0b;">●</span> <strong>Amber:</strong> Assigned to Department</span>
+          <span><span style="color: #10b981;">●</span> <strong>Green:</strong> Resolved & Verified</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Public Accountability Charts Section -->
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">📈 Public Accountability Dashboard</h2>
+          <p class="section-subtitle">Transparent breakdown of reported issues by category and municipal department performance.</p>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        
+        <!-- Category Distribution Chart -->
+        <div class="card">
+          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Issues by Category</h3>
+          <div style="position: relative; height: 280px;">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Status Breakdown Chart -->
+        <div class="card">
+          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Resolution Rate</h3>
+          <div style="position: relative; height: 280px;">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Areas with Most Reported Issues & Recent Resolved -->
+    <section class="section">
+      <div class="dashboard-split-grid">
+        
+        <!-- High-Priority Civic Hotspots -->
+        <div class="card" style="min-width: 0;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; word-break: break-word; overflow-wrap: anywhere;">⚠️ Top Areas Needing Attention</h3>
+          <p class="text-secondary" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Neighborhoods with the highest concentration of open complaints.</p>
+          
+          <div id="hotspotsList" style="min-width: 0;">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Recent Resolved Success Stories -->
+        <div class="card" style="min-width: 0;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; word-break: break-word; overflow-wrap: anywhere;">🎉 Recently Resolved Issues</h3>
+          <p class="text-secondary" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Complaints verified and confirmed as fixed by community residents.</p>
+          
+          <div id="recentResolvedList" style="min-width: 0;">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Call to action -->
+    <section class="section" style="text-align: center; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 3.5rem 1.5rem; margin-bottom: 3rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Spot an Issue in Your Neighborhood?</h2>
+      <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 1.75rem; font-size: 1.05rem;">
+        Don't let broken infrastructure go unnoticed. Snap a picture, mark the location, and let the community track the solution together.
+      </p>
+      <a href="report.html" class="btn btn-primary btn-lg">
+        <span>📸</span> Submit a Civic Complaint Now
+      </a>
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <span>🏛️</span> AwamiConnect
+          </div>
+          <p style="max-width: 380px; font-size: 0.85rem; line-height: 1.6;">
+            AwamiConnect is an independent civic reporting platform dedicated to fostering municipal transparency and community engagement.
+          </p>
+          <div style="margin-top: 1rem; font-size: 0.8rem; color: #cbd5e1;">
+            📍 Dedicated to empowering cities and local communities.
+          </div>
+        </div>
+
+        <div>
+          <h4 style="color: #ffffff; margin-bottom: 1rem; font-size: 0.95rem;">Quick Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="index.html">Home Dashboard</a></li>
+            <li><a href="report.html">Report Problem</a></li>
+            <li><a href="track.html">Track Complaint</a></li>
+            <li><a href="admin.html">Department Portal</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color: #ffffff; margin-bottom: 1rem; font-size: 0.95rem;">Civic Categories</h4>
+          <ul class="footer-links">
+            <li><a href="report.html">🛣️ Road Repair & Potholes</a></li>
+            <li><a href="report.html">🗑️ Waste & Sanitation</a></li>
+            <li><a href="report.html">💧 Water Supply Outages</a></li>
+            <li><a href="report.html">⚡ Streetlights & Electricity</a></li>
+            <li><a href="report.html">🚰 Drainage & Sewage Overflow</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        AwamiConnect Civic Project • Designed for citizen participation and municipal accountability.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Firebase SDK Compat CDN (Enables live Firebase when keys are inserted in js/firebase-config.js) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+
+</body>
+</html>

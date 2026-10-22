@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report an Issue — AwamiConnect Civic Platform</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Independent Civic Disclaimer Banner -->
+  <div class="disclaimer-banner">
+    📢 <strong>Notice:</strong> AwamiConnect is an independent civic reporting platform. Complaints are publicly logged for community accountability and advocacy.
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="brand">
+        <div class="brand-icon">🏛️</div>
+        <span>AwamiConnect</span>
+      </a>
+
+      <button class="mobile-menu-btn" aria-label="Toggle Menu" aria-expanded="false">☰</button>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home & Dashboard</a></li>
+        <li><a href="report.html" class="nav-link active">Report an Issue</a></li>
+        <li><a href="track.html" class="nav-link">Track Complaint</a></li>
+        <li><a href="admin.html" class="nav-link">Department Portal</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="track.html" class="btn btn-outline btn-sm">Track Existing</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+    <div style="max-width: 780px; margin: 0 auto;">
+      
+      <!-- Page Header -->
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.25rem; margin-bottom: 0.5rem;">Report a Civic Problem</h1>
+        <p style="color: var(--text-secondary); font-size: 1.05rem;">
+          Help improve your neighborhood by reporting infrastructure issues. Upload a photo, pin the location, and track the resolution step-by-step.
+        </p>
+      </div>
+
+      <!-- Complaint Form Card -->
+      <div class="card">
+        <form id="complaintForm">
+
+          <!-- 1. Issue Category -->
+          <div class="form-group">
+            <label class="form-label">
+              1. Select Issue Category <span class="required">*</span>
+            </label>
+            <div class="category-grid">
+              
+              <label>
+                <input type="radio" name="category" value="roads" class="category-radio" checked>
+                <div class="category-card">
+                  <span class="cat-icon">🛣️</span>
+                  <span class="cat-name">Roads</span>
+                </div>
+              </label>
+
+              <label>
+                <input type="radio" name="category" value="sanitation" class="category-radio">
+                <div class="category-card">
+                  <span class="cat-icon">🗑️</span>
+                  <span class="cat-name">Sanitation</span>
+                </div>
+              </label>
+
+              <label>
+                <input type="radio" name="category" value="water" class="category-radio">
+                <div class="category-card">
+                  <span class="cat-icon">💧</span>
+                  <span class="cat-name">Water Supply</span>
+                </div>
+              </label>
+
+              <label>
+                <input type="radio" name="category" value="electricity" class="category-radio">
+                <div class="category-card">
+                  <span class="cat-icon">⚡</span>
+                  <span class="cat-name">Electricity</span>
+                </div>
+              </label>
+
+              <label>
+                <input type="radio" name="category" value="drainage" class="category-radio">
+                <div class="category-card">
+                  <span class="cat-icon">🚰</span>
+                  <span class="cat-name">Drainage</span>
+                </div>
+              </label>
+
+              <label>
+                <input type="radio" name="category" value="other" class="category-radio">
+                <div class="category-card">
+                  <span class="cat-icon">🏗️</span>
+                  <span class="cat-name">Other Issue</span>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- 2. Photograph Upload -->
+          <div class="form-group" style="margin-top: 1.75rem;">
+            <label class="form-label">
+              2. Upload or Take Photograph <span class="required">*</span>
+            </label>
+            <p class="form-help" style="margin-bottom: 0.5rem;">Visual evidence helps moderators and departments prioritize the repair.</p>
+            
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;">
+              <div class="upload-icon">📸</div>
+              <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
+                Click to Take Photo or Browse Files
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Supports JPG, PNG (automatically compressed for fast upload)
+              </div>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div class="upload-preview-container" id="previewContainer">
+              <img id="imagePreview" class="upload-preview" alt="Issue Preview" />
+              <button type="button" class="upload-remove-btn" id="removeImageBtn" title="Remove image">✕</button>
+            </div>
+
+            <!-- Quick Demo Photos for Testing -->
+            <div class="sample-photos-row" id="quickSampleRow">
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">⚡ Quick Demo Photos:</span>
+              <button type="button" class="sample-photo-btn" data-category="roads" data-url="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=600&q=80">
+                🛣️ Pothole
+              </button>
+              <button type="button" class="sample-photo-btn" data-category="sanitation" data-url="https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?auto=format&fit=crop&w=600&q=80">
+                🗑️ Garbage
+              </button>
+              <button type="button" class="sample-photo-btn" data-category="electricity" data-url="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=600&q=80">
+                ⚡ Streetlight
+              </button>
+              <button type="button" class="sample-photo-btn" data-category="water" data-url="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=600&q=80">
+                💧 Water Leak
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Location Picker & Map -->
+          <div class="form-group" style="margin-top: 1.75rem;">
+            <div class="map-helper-bar">
+              <label class="form-label" style="margin-bottom: 0;">
+                3. Mark Location on Map <span class="required">*</span>
+              </label>
+              <button type="button" class="btn btn-outline btn-sm" id="btnUseGps">
+                <span>📍</span> Use My Current Location
+              </button>
+            </div>
+            <p class="form-help" style="margin-bottom: 0.6rem;">Click anywhere on the map or drag the pin to set the exact spot.</p>
+
+            <!-- Map Container -->
+            <div id="pickerMap" class="map-container"></div>
+
+            <!-- Address Field -->
+            <div style="margin-top: 0.75rem;">
+              <input type="text" id="locationAddress" class="form-control" placeholder="Street / Area / Landmark (e.g. Block 13-D Near Main Market)" required>
+              <div style="display: flex; gap: 1rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-muted);">
+                <span>Lat: <strong id="lblLat">24.8607</strong></span>
+                <span>Lng: <strong id="lblLng">67.0011</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Problem Description -->
+          <div class="form-group" style="margin-top: 1.75rem;">
+            <label class="form-label" for="complaintTitle">
+              4. Problem Title <span class="required">*</span>
+            </label>
+            <input type="text" id="complaintTitle" class="form-control" placeholder="e.g. Damaged Streetlight near Mosque entrance" required maxlength="120">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="complaintDesc">
+              Detailed Description <span class="required">*</span>
+            </label>
+            <textarea id="complaintDesc" class="form-textarea" placeholder="Explain the severity, how long it has existed, and any hazards to pedestrians or drivers..." required></textarea>
+          </div>
+
+          <!-- 5. Citizen Contact Details -->
+          <div style="margin-top: 1.75rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Citizen Information</h3>
+            <p class="form-help" style="margin-bottom: 1rem;">Your contact details allow us to verify the report and send tracking updates.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label" for="citizenName">Full Name <span class="required">*</span></label>
+                <input type="text" id="citizenName" class="form-control" placeholder="e.g. Tariq Mehmood" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="citizenPhone">Phone / WhatsApp Number <span class="required">*</span></label>
+                <input type="tel" id="citizenPhone" class="form-control" placeholder="e.g. 0300-1234567" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary btn-lg btn-full" id="btnSubmit">
+              <span>🚀</span> Submit Complaint & Generate Tracking ID
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Success Modal -->
+  <div class="modal-backdrop" id="successModal">
+    <div class="modal-box" style="text-align: center;">
+      <div class="modal-body" style="padding: 2.5rem 1.75rem;">
+        <div style="width: 72px; height: 72px; background: #d1fae5; color: #059669; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.25rem;">
+          ✓
+        </div>
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Complaint Registered!</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Your issue has been logged on the independent AwamiConnect civic registry. You can track its progress anytime using this Tracking ID:
+        </p>
+
+        <!-- Tracking Badge Box -->
+        <div class="tracking-id-badge-box">
+          <span id="modalTrackingId" class="tracking-id-text">AC-2026-0000</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyId">📋 Copy</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="#" id="modalTrackBtn" class="btn btn-primary btn-full">
+            <span>🔍</span> Track This Complaint Now
+          </a>
+          <a href="#" id="modalShareWhatsapp" target="_blank" class="btn btn-outline btn-full" style="color: #15803d; border-color: #86efac;">
+            <span>💬</span> Share with Neighbors on WhatsApp
+          </a>
+          <button type="button" class="btn btn-outline btn-full" id="modalCloseBtn">
+            Submit Another Complaint
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Firebase SDK Compat CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/report.js"></script>
+
+</body>
+</html>

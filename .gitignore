@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Internal agent logs and temporary runs
+.agents/
+.system_generated/
+*.log
+
+# Environment & Credentials
+.env
+.env.local
+
+# Operating System files
+.DS_Store
+Thumbs.db

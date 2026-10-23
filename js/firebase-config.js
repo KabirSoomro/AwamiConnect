@@ -41,8 +41,9 @@ const INITIAL_DEMO_COMPLAINTS = [
     locationName: "Gulshan-e-Iqbal, Block 13-D, Near Disco Bakery, Karachi",
     lat: 24.9207,
     lng: 67.0982,
-    citizenName: "Ahmed Khan",
-    citizenPhone: "0300-1234567",
+    citizenName: "Kabeer Soomro",
+    citizenPhone: "03168465697",
+    citizenEmail: "gkabeersoomro@gmail.com",
     status: "resolved", // submitted, under_review, assigned, resolved, rejected
     department: "City Electric & Municipal Works",
     officerRemarks: "Field maintenance team replaced the LED armature and circuit breaker.",
@@ -65,8 +66,9 @@ const INITIAL_DEMO_COMPLAINTS = [
     locationName: "North Nazimabad, Block H, Near Shipowners College, Karachi",
     lat: 24.9456,
     lng: 67.0392,
-    citizenName: "Sana Tariq",
-    citizenPhone: "0321-9876543",
+    citizenName: "Kabeer Soomro",
+    citizenPhone: "03168465697",
+    citizenEmail: "gkabeersoomro@gmail.com",
     status: "assigned",
     department: "District Highway & Works Dept",
     officerRemarks: "Asphalt repair team dispatched for survey and patch work.",
@@ -88,8 +90,9 @@ const INITIAL_DEMO_COMPLAINTS = [
     locationName: "Johar Town, Block G-3, Near Commercial Market, Lahore",
     lat: 31.4697,
     lng: 74.2728,
-    citizenName: "Usman Ali",
-    citizenPhone: "0333-5554321",
+    citizenName: "Kabeer Soomro",
+    citizenPhone: "03168465697",
+    citizenEmail: "gkabeersoomro@gmail.com",
     status: "under_review",
     department: "Waste Management Corporation (LWMC)",
     officerRemarks: "Assigned to zonal inspector for urgent sanitation tractor allocation.",
@@ -111,8 +114,9 @@ const INITIAL_DEMO_COMPLAINTS = [
     locationName: "F-10/2, Street 35, Near Park, Islamabad",
     lat: 33.6938,
     lng: 73.0135,
-    citizenName: "Bilal Farooq",
-    citizenPhone: "0345-4433221",
+    citizenName: "Kabeer Soomro",
+    citizenPhone: "03168465697",
+    citizenEmail: "gkabeersoomro@gmail.com",
     status: "submitted",
     department: "Capital Water & Sanitation Directorate",
     officerRemarks: "",
@@ -134,8 +138,9 @@ const INITIAL_DEMO_COMPLAINTS = [
     locationName: "Clifton Block 2, Near Bilawal Chowrangi, Karachi",
     lat: 24.8198,
     lng: 67.0311,
-    citizenName: "Zainab Shah",
-    citizenPhone: "0312-3322110",
+    citizenName: "Kabeer Soomro",
+    citizenPhone: "03168465697",
+    citizenEmail: "gkabeersoomro@gmail.com",
     status: "resolved",
     department: "Karachi Water & Sewerage Corporation",
     officerRemarks: "Suction jetting machine cleared the blockage in main collector line.",
@@ -178,8 +183,16 @@ class CivicDatabaseService {
   }
 
   initStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
+    const existing = localStorage.getItem(this.storageKey);
+    if (!existing) {
       localStorage.setItem(this.storageKey, JSON.stringify(INITIAL_DEMO_COMPLAINTS));
+    } else {
+      try {
+        const parsed = JSON.parse(existing);
+        if (Array.isArray(parsed) && parsed.some(c => c.citizenName === "Ahmed Khan" || c.citizenName === "Sana Tariq")) {
+          localStorage.setItem(this.storageKey, JSON.stringify(INITIAL_DEMO_COMPLAINTS));
+        }
+      } catch (e) {}
     }
   }
 

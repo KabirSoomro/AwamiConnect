@@ -44,8 +44,8 @@ function setupAuth() {
   if (loginForm) {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const email = document.getElementById("loginEmail").value.trim();
-      const user = { name: "Municipal Moderator", email: email, role: "moderator" };
+      const email = document.getElementById("loginEmail").value.trim() || "gkabeersoomro@gmail.com";
+      const user = { name: "Kabeer Soomro", email: email, role: "moderator" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
       showToast("Signed in successfully!", "success");
       showAdminDashboard(user);
@@ -55,9 +55,9 @@ function setupAuth() {
   // 1-Click Demo Login
   if (quickDemoBtn) {
     quickDemoBtn.addEventListener("click", () => {
-      const demoUser = { name: "Chief Municipal Moderator", email: "chief.officer@civic.gov", role: "super_admin" };
+      const demoUser = { name: "Kabeer Soomro", email: "gkabeersoomro@gmail.com", role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoUser));
-      showToast("Signed in as Chief Moderator (Demo)", "success");
+      showToast("Signed in as Kabeer Soomro (Admin)", "success");
       showAdminDashboard(demoUser);
     });
   }
@@ -101,7 +101,7 @@ let adminUnsubscribe = null;
 async function showAdminDashboard(user) {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("adminPortal").style.display = "block";
-  document.getElementById("officerName").textContent = user.name || "Municipal Officer";
+  document.getElementById("officerName").textContent = user.name || "Kabeer Soomro";
   await loadAdminComplaints();
 
   if (!adminUnsubscribe && window.dbService && typeof window.dbService.onComplaintsChange === "function") {
@@ -217,8 +217,8 @@ function renderTable(complaints) {
         </div>
       </td>
       <td>
-        <div style="font-size: 0.85rem; font-weight: 600;">${c.citizenName || 'Resident'}</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted);">${c.citizenPhone || '--'}</div>
+        <div style="font-size: 0.85rem; font-weight: 600;">${c.citizenName || 'Kabeer Soomro'}</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">${c.citizenPhone || '03168465697'}</div>
       </td>
       <td>
         ${getStatusBadge(c.status)}
@@ -301,7 +301,7 @@ window.openEditModal = function (complaintId) {
   document.getElementById("modalEditId").textContent = complaint.id;
   document.getElementById("modalEditHeading").textContent = complaint.title;
   document.getElementById("modalEditLocation").textContent = `📍 ${complaint.locationName || 'Marked on map'}`;
-  document.getElementById("modalEditCitizen").textContent = `Reported by: ${complaint.citizenName || 'Citizen'} (${complaint.citizenPhone || 'N/A'})`;
+  document.getElementById("modalEditCitizen").textContent = `Reported by: ${complaint.citizenName || 'Kabeer Soomro'} (${complaint.citizenPhone || '03168465697'})`;
   document.getElementById("modalEditDesc").textContent = complaint.description;
 
   const photo = document.getElementById("modalEditPhoto");

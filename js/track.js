@@ -118,7 +118,7 @@ function renderComplaint(c) {
   document.getElementById("complaintTrackingId").textContent = c.id;
   document.getElementById("complaintTitle").textContent = c.title;
   document.getElementById("complaintDate").textContent = formatDate(c.submittedAt);
-  document.getElementById("complaintReporter").textContent = c.citizenName || "Anonymous Resident";
+  document.getElementById("complaintReporter").textContent = c.citizenName || "Kabeer Soomro";
   document.getElementById("complaintStatusBadge").innerHTML = getStatusBadge(c.status);
 
   // Evidence Photo

@@ -262,10 +262,11 @@ function setupFormSubmission() {
     const title = document.getElementById("complaintTitle").value.trim();
     const desc = document.getElementById("complaintDesc").value.trim();
     const address = document.getElementById("locationAddress").value.trim();
-    const citizenName = document.getElementById("citizenName").value.trim();
-    const citizenPhone = document.getElementById("citizenPhone").value.trim();
+    const citizenName = document.getElementById("citizenName").value.trim() || "Kabeer Soomro";
+    const citizenPhone = document.getElementById("citizenPhone").value.trim() || "03168465697";
+    const citizenEmail = (document.getElementById("citizenEmail")?.value.trim()) || "gkabeersoomro@gmail.com";
 
-    if (!title || !desc || !address || !citizenName || !citizenPhone) {
+    if (!title || !desc || !address) {
       showToast("Please fill in all required fields.", "error");
       return;
     }
@@ -288,6 +289,7 @@ function setupFormSubmission() {
         lng: selectedLng,
         citizenName: citizenName,
         citizenPhone: citizenPhone,
+        citizenEmail: citizenEmail,
         status: "submitted",
         department: categoryInfo.department,
         officerRemarks: "",
@@ -308,8 +310,13 @@ function setupFormSubmission() {
       // Open Success Modal
       showSuccessModal(newComplaint);
 
-      // Reset form
+      // Reset form and re-populate default citizen details
       form.reset();
+      document.getElementById("citizenName").value = "Kabeer Soomro";
+      document.getElementById("citizenPhone").value = "03168465697";
+      if (document.getElementById("citizenEmail")) {
+        document.getElementById("citizenEmail").value = "gkabeersoomro@gmail.com";
+      }
       document.getElementById("removeImageBtn").click();
 
     } catch (err) {
@@ -358,8 +365,9 @@ async function sendEmailNotification(complaint) {
       "Complaint Title": complaint.title,
       "Category": `${complaint.categoryIcon || "📌"} ${complaint.categoryLabel || complaint.category}`,
       "Assigned Department": complaint.department || "Municipal Services",
-      "Citizen Name": complaint.citizenName,
-      "Citizen Contact": complaint.citizenPhone,
+      "Citizen Name": complaint.citizenName || "Kabeer Soomro",
+      "Citizen Contact": complaint.citizenPhone || "03168465697",
+      "Citizen Email": complaint.citizenEmail || "gkabeersoomro@gmail.com",
       "Location Area": complaint.locationName,
       "GPS Coordinates": `${complaint.lat}, ${complaint.lng}`,
       "Google Maps Link": `https://www.google.com/maps?q=${complaint.lat},${complaint.lng}`,

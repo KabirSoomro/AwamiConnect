@@ -5,9 +5,33 @@
 let adminComplaints = [];
 let selectedComplaintForEdit = null;
 const AUTH_SESSION_KEY = "awami_admin_auth";
+const ADMIN_CREDS_KEY = "awami_admin_credentials";
+
+const DEFAULT_ADMIN_CREDS = {
+  email: "admin@gmail.com",
+  password: "admin123"
+};
+
+function getAdminCredentials() {
+  try {
+    const raw = localStorage.getItem(ADMIN_CREDS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.email && parsed.password) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return { ...DEFAULT_ADMIN_CREDS };
+}
+
+function saveAdminCredentials(creds) {
+  localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify(creds));
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   setupAuth();
+  setupSettingsModal();
   setupFilters();
   setupEditModal();
 });
@@ -18,6 +42,12 @@ function setupAuth() {
   const quickDemoBtn = document.getElementById("btnQuickDemoLogin");
   const logoutBtn = document.getElementById("btnLogout");
   const resetDemoBtn = document.getElementById("btnResetDemo");
+  const loginEmailInput = document.getElementById("loginEmail");
+
+  const currentCreds = getAdminCredentials();
+  if (loginEmailInput) {
+    loginEmailInput.placeholder = currentCreds.email;
+  }
 
   // Check existing session with resilient corrupt session recovery
   try {
@@ -44,7 +74,8 @@ function setupAuth() {
   if (loginForm) {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const email = document.getElementById("loginEmail").value.trim() || "gkabeersoomro@gmail.com";
+      const activeCreds = getAdminCredentials();
+      const email = (document.getElementById("loginEmail").value.trim() || activeCreds.email).toLowerCase();
       const password = document.getElementById("loginPassword").value.trim();
 
       if (!password) {
@@ -52,12 +83,17 @@ function setupAuth() {
         return;
       }
 
-      if (password !== "admin123") {
-        showToast("Incorrect password! (Default password is: admin123)", "error");
+      if (email !== activeCreds.email.toLowerCase()) {
+        showToast(`Invalid Admin Email! Registered admin is: ${activeCreds.email}`, "error");
         return;
       }
 
-      const user = { name: "Kabeer Soomro", email: email, role: "moderator" };
+      if (password !== activeCreds.password) {
+        showToast("Incorrect password! Please enter the correct admin password.", "error");
+        return;
+      }
+
+      const user = { name: "Kabeer Soomro", email: activeCreds.email, role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
       showToast("Signed in successfully as Admin!", "success");
       showAdminDashboard(user);
@@ -67,7 +103,8 @@ function setupAuth() {
   // 1-Click Demo Login
   if (quickDemoBtn) {
     quickDemoBtn.addEventListener("click", () => {
-      const demoUser = { name: "Kabeer Soomro", email: "gkabeersoomro@gmail.com", role: "super_admin" };
+      const activeCreds = getAdminCredentials();
+      const demoUser = { name: "Kabeer Soomro", email: activeCreds.email, role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoUser));
       showToast("Signed in as Kabeer Soomro (Admin)", "success");
       showAdminDashboard(demoUser);
@@ -111,9 +148,12 @@ function showLoginScreen() {
 let adminUnsubscribe = null;
 
 async function showAdminDashboard(user) {
+  const activeCreds = getAdminCredentials();
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("adminPortal").style.display = "block";
   document.getElementById("officerName").textContent = user.name || "Kabeer Soomro";
+  const emailDisplay = document.getElementById("officerEmail");
+  if (emailDisplay) emailDisplay.textContent = activeCreds.email;
   await loadAdminComplaints();
 
   if (!adminUnsubscribe && window.dbService && typeof window.dbService.onComplaintsChange === "function") {
@@ -358,4 +398,120 @@ function exportComplaintsToCSV(complaints) {
   link.click();
   document.body.removeChild(link);
   showToast("Complaints CSV report downloaded!", "success");
+}
+
+// 6. Admin Account Settings (Change Email & Password)
+function setupSettingsModal() {
+  const modal = document.getElementById("settingsModal");
+  const openBtn = document.getElementById("btnAdminSettings");
+  const closeX = document.getElementById("btnCloseSettingsX");
+  const cancelBtn = document.getElementById("btnCancelSettings");
+  const saveBtn = document.getElementById("btnSaveSettings");
+  const resetBtn = document.getElementById("btnResetCredsToDefault");
+
+  if (!modal) return;
+
+  function openModal() {
+    const creds = getAdminCredentials();
+    document.getElementById("settingsEmail").value = creds.email;
+    document.getElementById("settingsCurrentPass").value = "";
+    document.getElementById("settingsNewPass").value = "";
+    document.getElementById("settingsConfirmPass").value = "";
+    modal.classList.add("open");
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+  }
+
+  if (openBtn) openBtn.addEventListener("click", openModal);
+  if (closeX) closeX.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Reset to default admin@gmail.com / admin123
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Reset admin credentials back to default (admin@gmail.com / admin123)?")) {
+        saveAdminCredentials(DEFAULT_ADMIN_CREDS);
+        document.getElementById("settingsEmail").value = DEFAULT_ADMIN_CREDS.email;
+        document.getElementById("settingsCurrentPass").value = "";
+        document.getElementById("settingsNewPass").value = "";
+        document.getElementById("settingsConfirmPass").value = "";
+
+        const emailDisplay = document.getElementById("officerEmail");
+        if (emailDisplay) emailDisplay.textContent = DEFAULT_ADMIN_CREDS.email;
+        const loginEmail = document.getElementById("loginEmail");
+        if (loginEmail) loginEmail.placeholder = DEFAULT_ADMIN_CREDS.email;
+
+        showToast("Credentials restored to default: admin@gmail.com / admin123", "info");
+      }
+    });
+  }
+
+  // Save new credentials
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const creds = getAdminCredentials();
+      const newEmail = document.getElementById("settingsEmail").value.trim().toLowerCase();
+      const currentPass = document.getElementById("settingsCurrentPass").value.trim();
+      const newPass = document.getElementById("settingsNewPass").value.trim();
+      const confirmPass = document.getElementById("settingsConfirmPass").value.trim();
+
+      if (!newEmail) {
+        showToast("Admin Email cannot be empty.", "error");
+        return;
+      }
+
+      if (!/\S+@\S+\.\S+/.test(newEmail)) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+      }
+
+      if (!currentPass) {
+        showToast("Please enter your current password to authorize changes.", "error");
+        return;
+      }
+
+      if (currentPass !== creds.password) {
+        showToast("Current password does not match! Verification failed.", "error");
+        return;
+      }
+
+      let finalPassword = creds.password;
+      if (newPass) {
+        if (newPass.length < 4) {
+          showToast("New password must be at least 4 characters long.", "error");
+          return;
+        }
+        if (newPass !== confirmPass) {
+          showToast("New password and confirm password do not match!", "error");
+          return;
+        }
+        finalPassword = newPass;
+      }
+
+      const updatedCreds = {
+        email: newEmail,
+        password: finalPassword
+      };
+      saveAdminCredentials(updatedCreds);
+
+      // Update current session
+      const updatedUser = { name: "Kabeer Soomro", email: newEmail, role: "super_admin" };
+      sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(updatedUser));
+
+      // Update UI displays
+      const officerEmail = document.getElementById("officerEmail");
+      if (officerEmail) officerEmail.textContent = newEmail;
+      const loginEmail = document.getElementById("loginEmail");
+      if (loginEmail) loginEmail.placeholder = newEmail;
+
+      closeModal();
+      showToast("Admin credentials updated successfully!", "success");
+    });
+  }
 }

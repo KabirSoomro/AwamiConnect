@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAuth();
   setupSettingsModal();
   setupForgotPasswordModal();
+  setupResetViaLinkModal();
+  checkResetTokenInUrl();
   setupPasswordToggles();
   setupFilters();
   setupEditModal();
@@ -543,18 +545,18 @@ function setupPasswordToggles() {
   });
 }
 
-// 8. Forgot Password Recovery Flow
+const RESET_TOKEN_KEY = "awami_admin_reset_token";
+
+// 8. Forgot Password: Send Password Reset Link directly to Admin's Email
 function setupForgotPasswordModal() {
   const modal = document.getElementById("forgotPasswordModal");
   const openLink = document.getElementById("btnForgotPassLink");
   const closeX = document.getElementById("btnCloseForgotX");
   const cancelBtn = document.getElementById("btnCancelForgot");
-  const sendCodeBtn = document.getElementById("btnSendResetCode");
-  const submitNewPassBtn = document.getElementById("btnSubmitNewPassword");
+  const sendLinkBtn = document.getElementById("btnSendResetLink");
+  const backToLoginBtn = document.getElementById("btnBackToLoginAfterSent");
 
   if (!modal) return;
-
-  let activeRecoveryCode = null;
 
   function openForgotModal() {
     const creds = getAdminCredentials();
@@ -563,25 +565,27 @@ function setupForgotPasswordModal() {
 
     document.getElementById("forgotStep1").style.display = "block";
     document.getElementById("forgotStep2").style.display = "none";
+    const footer = document.getElementById("forgotModalFooter");
+    if (footer) footer.style.display = "flex";
     modal.classList.add("open");
   }
 
   function closeForgotModal() {
     modal.classList.remove("open");
-    activeRecoveryCode = null;
   }
 
   if (openLink) openLink.addEventListener("click", openForgotModal);
   if (closeX) closeX.addEventListener("click", closeForgotModal);
   if (cancelBtn) cancelBtn.addEventListener("click", closeForgotModal);
+  if (backToLoginBtn) backToLoginBtn.addEventListener("click", closeForgotModal);
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) closeForgotModal();
   });
 
-  // Step 1: Generate 6-Digit Recovery Code
-  if (sendCodeBtn) {
-    sendCodeBtn.addEventListener("click", () => {
+  // Send Reset Link to Admin's Registered Email
+  if (sendLinkBtn) {
+    sendLinkBtn.addEventListener("click", async () => {
       const creds = getAdminCredentials();
       const enteredEmail = document.getElementById("forgotEmailInput").value.trim().toLowerCase();
 
@@ -595,38 +599,130 @@ function setupForgotPasswordModal() {
         return;
       }
 
-      // Generate 6-digit code
-      activeRecoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-      document.getElementById("displayCodeReminder").textContent = activeRecoveryCode;
+      sendLinkBtn.disabled = true;
+      sendLinkBtn.innerHTML = `<span>⏳</span> Dispatching Reset Link...`;
 
-      // Switch to Step 2
+      // Generate unique token
+      const token = "rst_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+      const tokenData = {
+        token: token,
+        email: creds.email,
+        expiresAt: Date.now() + 60 * 60 * 1000 // 60 minutes
+      };
+      localStorage.setItem(RESET_TOKEN_KEY, JSON.stringify(tokenData));
+
+      // Build link
+      const resetUrl = `${window.location.origin}${window.location.pathname}?reset_token=${token}`;
+
+      // Dispatch Email to Admin's Email via FormSubmit
+      try {
+        await fetch(`https://formsubmit.co/ajax/${creds.email}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            _subject: "🔐 AwamiConnect: Password Reset Link for Admin",
+            _template: "table",
+            _captcha: "false",
+            "Account": "AwamiConnect Administrator Portal",
+            "Admin Email": creds.email,
+            "Password Reset Link": resetUrl,
+            "Validity": "60 Minutes",
+            "Instructions": "Click the Password Reset Link above to open the secure portal and set your new admin password.",
+            "Requested At": new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })
+          })
+        });
+      } catch (err) {
+        console.warn("Email dispatch note (non-blocking):", err);
+      } finally {
+        sendLinkBtn.disabled = false;
+        sendLinkBtn.innerHTML = `<span>📨</span> Send Password Reset Link to Email`;
+      }
+
+      // Display Step 2 Confirmation & Shortcut Link
+      document.getElementById("displaySentEmail").textContent = creds.email;
+      const linkDirectReset = document.getElementById("linkDirectReset");
+      if (linkDirectReset) {
+        linkDirectReset.href = resetUrl;
+      }
+
       document.getElementById("forgotStep1").style.display = "none";
       document.getElementById("forgotStep2").style.display = "block";
-      document.getElementById("forgotCodeInput").value = "";
-      document.getElementById("forgotNewPass").value = "";
-      document.getElementById("forgotConfirmPass").value = "";
+      const footer = document.getElementById("forgotModalFooter");
+      if (footer) footer.style.display = "none";
 
-      showToast("6-Digit recovery code generated!", "success");
+      showToast(`Password reset link dispatched to ${creds.email}!`, "success");
     });
   }
+}
 
-  // Step 2: Verify Code and Save New Password
-  if (submitNewPassBtn) {
-    submitNewPassBtn.addEventListener("click", () => {
-      const creds = getAdminCredentials();
-      const enteredCode = document.getElementById("forgotCodeInput").value.trim();
-      const newPass = document.getElementById("forgotNewPass").value.trim();
-      const confirmPass = document.getElementById("forgotConfirmPass").value.trim();
+// 9. Check Reset Token in URL and open Set New Password Modal
+function checkResetTokenInUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get("reset_token");
+  if (!resetToken) return;
 
-      if (!enteredCode) {
-        showToast("Please enter the 6-digit recovery code.", "error");
-        return;
-      }
+  const rawTokenData = localStorage.getItem(RESET_TOKEN_KEY);
+  if (!rawTokenData) {
+    showToast("This password reset link is invalid or has already been used.", "error");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
 
-      if (enteredCode !== activeRecoveryCode) {
-        showToast("Invalid recovery code. Please check and try again.", "error");
-        return;
-      }
+  try {
+    const tokenData = JSON.parse(rawTokenData);
+    if (!tokenData || tokenData.token !== resetToken) {
+      showToast("Invalid password reset token.", "error");
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (Date.now() > tokenData.expiresAt) {
+      showToast("This password reset link has expired (valid for 60 mins). Please request a new link.", "error");
+      localStorage.removeItem(RESET_TOKEN_KEY);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    // Open Set New Password Modal
+    const modal = document.getElementById("resetViaLinkModal");
+    const emailElem = document.getElementById("resetTargetEmail");
+    if (emailElem) emailElem.textContent = tokenData.email;
+
+    document.getElementById("linkNewPass").value = "";
+    document.getElementById("linkConfirmPass").value = "";
+
+    if (modal) {
+      modal.classList.add("open");
+    }
+  } catch (err) {
+    console.error("Token verification error:", err);
+  }
+}
+
+// 10. Handle Set New Password Submission via Reset Link
+function setupResetViaLinkModal() {
+  const modal = document.getElementById("resetViaLinkModal");
+  const closeX = document.getElementById("btnCloseResetViaLinkX");
+  const cancelBtn = document.getElementById("btnCancelResetViaLink");
+  const submitBtn = document.getElementById("btnSubmitResetViaLink");
+
+  if (!modal) return;
+
+  function closeModal() {
+    modal.classList.remove("open");
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  if (closeX) closeX.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+
+  if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+      const newPass = document.getElementById("linkNewPass").value.trim();
+      const confirmPass = document.getElementById("linkConfirmPass").value.trim();
 
       if (!newPass || newPass.length < 4) {
         showToast("New password must be at least 4 characters long.", "error");
@@ -638,7 +734,7 @@ function setupForgotPasswordModal() {
         return;
       }
 
-      // Save updated password
+      const creds = getAdminCredentials();
       const updatedCreds = {
         name: creds.name || "Admin",
         email: creds.email,
@@ -646,12 +742,19 @@ function setupForgotPasswordModal() {
       };
       saveAdminCredentials(updatedCreds);
 
-      // Pre-fill password on login form
-      const loginPassword = document.getElementById("loginPassword");
-      if (loginPassword) loginPassword.value = newPass;
+      // Invalidate used reset token
+      localStorage.removeItem(RESET_TOKEN_KEY);
 
-      closeForgotModal();
-      showToast("Password successfully reset! You can now sign in.", "success");
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      modal.classList.remove("open");
+      showToast("Password reset successfully! Welcome to Admin Portal.", "success");
+
+      // Auto sign in as Admin
+      const user = { name: updatedCreds.name || "Admin", email: updatedCreds.email, role: "super_admin" };
+      sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
+      showAdminDashboard(user);
     });
   }
 }

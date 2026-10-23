@@ -37,6 +37,8 @@ function saveAdminCredentials(creds) {
 document.addEventListener("DOMContentLoaded", () => {
   setupAuth();
   setupSettingsModal();
+  setupForgotPasswordModal();
+  setupPasswordToggles();
   setupFilters();
   setupEditModal();
 });
@@ -44,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // 1. Authentication Handlers
 function setupAuth() {
   const loginForm = document.getElementById("adminLoginForm");
-  const quickDemoBtn = document.getElementById("btnQuickDemoLogin");
   const logoutBtn = document.getElementById("btnLogout");
   const resetDemoBtn = document.getElementById("btnResetDemo");
   const loginEmailInput = document.getElementById("loginEmail");
@@ -102,17 +103,6 @@ function setupAuth() {
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
       showToast("Signed in successfully as Admin!", "success");
       showAdminDashboard(user);
-    });
-  }
-
-  // 1-Click Demo Login
-  if (quickDemoBtn) {
-    quickDemoBtn.addEventListener("click", () => {
-      const activeCreds = getAdminCredentials();
-      const demoUser = { name: activeCreds.name || "Admin", email: activeCreds.email, role: "super_admin" };
-      sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoUser));
-      showToast("Signed in as " + (activeCreds.name || "Admin"), "success");
-      showAdminDashboard(demoUser);
     });
   }
 
@@ -528,6 +518,140 @@ function setupSettingsModal() {
 
       closeModal();
       showToast("Admin settings updated successfully!", "success");
+    });
+  }
+}
+
+// 7. Password Visibility Toggle (Show / Hide Password)
+function setupPasswordToggles() {
+  document.querySelectorAll(".password-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const input = document.getElementById(targetId);
+      if (!input) return;
+
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+        btn.title = "Hide password";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+        btn.title = "Show password";
+      }
+    });
+  });
+}
+
+// 8. Forgot Password Recovery Flow
+function setupForgotPasswordModal() {
+  const modal = document.getElementById("forgotPasswordModal");
+  const openLink = document.getElementById("btnForgotPassLink");
+  const closeX = document.getElementById("btnCloseForgotX");
+  const cancelBtn = document.getElementById("btnCancelForgot");
+  const sendCodeBtn = document.getElementById("btnSendResetCode");
+  const submitNewPassBtn = document.getElementById("btnSubmitNewPassword");
+
+  if (!modal) return;
+
+  let activeRecoveryCode = null;
+
+  function openForgotModal() {
+    const creds = getAdminCredentials();
+    const emailInput = document.getElementById("forgotEmailInput");
+    if (emailInput) emailInput.value = creds.email;
+
+    document.getElementById("forgotStep1").style.display = "block";
+    document.getElementById("forgotStep2").style.display = "none";
+    modal.classList.add("open");
+  }
+
+  function closeForgotModal() {
+    modal.classList.remove("open");
+    activeRecoveryCode = null;
+  }
+
+  if (openLink) openLink.addEventListener("click", openForgotModal);
+  if (closeX) closeX.addEventListener("click", closeForgotModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeForgotModal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeForgotModal();
+  });
+
+  // Step 1: Generate 6-Digit Recovery Code
+  if (sendCodeBtn) {
+    sendCodeBtn.addEventListener("click", () => {
+      const creds = getAdminCredentials();
+      const enteredEmail = document.getElementById("forgotEmailInput").value.trim().toLowerCase();
+
+      if (!enteredEmail) {
+        showToast("Please enter your registered Admin Email.", "error");
+        return;
+      }
+
+      if (enteredEmail !== creds.email.toLowerCase()) {
+        showToast(`No admin account registered with: ${enteredEmail}`, "error");
+        return;
+      }
+
+      // Generate 6-digit code
+      activeRecoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+      document.getElementById("displayCodeReminder").textContent = activeRecoveryCode;
+
+      // Switch to Step 2
+      document.getElementById("forgotStep1").style.display = "none";
+      document.getElementById("forgotStep2").style.display = "block";
+      document.getElementById("forgotCodeInput").value = "";
+      document.getElementById("forgotNewPass").value = "";
+      document.getElementById("forgotConfirmPass").value = "";
+
+      showToast("6-Digit recovery code generated!", "success");
+    });
+  }
+
+  // Step 2: Verify Code and Save New Password
+  if (submitNewPassBtn) {
+    submitNewPassBtn.addEventListener("click", () => {
+      const creds = getAdminCredentials();
+      const enteredCode = document.getElementById("forgotCodeInput").value.trim();
+      const newPass = document.getElementById("forgotNewPass").value.trim();
+      const confirmPass = document.getElementById("forgotConfirmPass").value.trim();
+
+      if (!enteredCode) {
+        showToast("Please enter the 6-digit recovery code.", "error");
+        return;
+      }
+
+      if (enteredCode !== activeRecoveryCode) {
+        showToast("Invalid recovery code. Please check and try again.", "error");
+        return;
+      }
+
+      if (!newPass || newPass.length < 4) {
+        showToast("New password must be at least 4 characters long.", "error");
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        showToast("New password and confirm password do not match!", "error");
+        return;
+      }
+
+      // Save updated password
+      const updatedCreds = {
+        name: creds.name || "Admin",
+        email: creds.email,
+        password: newPass
+      };
+      saveAdminCredentials(updatedCreds);
+
+      // Pre-fill password on login form
+      const loginPassword = document.getElementById("loginPassword");
+      if (loginPassword) loginPassword.value = newPass;
+
+      closeForgotModal();
+      showToast("Password successfully reset! You can now sign in.", "success");
     });
   }
 }

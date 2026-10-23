@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3000;
-const PUBLIC_DIR = __dirname;
+const PUBLIC_DIR = path.resolve(__dirname);
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
@@ -19,15 +19,18 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  // Parse clean URL
   let parsedUrl = req.url.split('?')[0];
   if (parsedUrl === '/' || parsedUrl === '') {
     parsedUrl = '/index.html';
   }
 
-  // Prevent directory traversal
-  const safePath = path.normalize(parsedUrl).replace(/^(\.\.[\/\\])+/, '');
-  const filePath = path.join(PUBLIC_DIR, safePath);
+  // Auto-resolve missing .html extension if needed
+  let safePath = path.normalize(parsedUrl).replace(/^(\.\.[\/\\])+/, '');
+  let filePath = path.join(PUBLIC_DIR, safePath);
+
+  if (!path.extname(filePath) && fs.existsSync(filePath + '.html')) {
+    filePath += '.html';
+  }
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
@@ -52,6 +55,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`====================================================`);
   console.log(`🏛️  AwamiConnect Local Web Server Running!`);
+  console.log(`👉  Serving directory: ${PUBLIC_DIR}`);
   console.log(`👉  URL: http://127.0.0.1:${PORT}`);
   console.log(`====================================================`);
 });

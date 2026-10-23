@@ -36,6 +36,21 @@
    - Live Leaflet city map with color-coded markers (🔴 Red, 🔵 Blue, 🟡 Amber, 🟢 Green).
    - Chart.js category breakdown & resolution percentage.
    - Top high-priority hotspots needing municipal attention.
+9. **📧 Automated Email Notifications**:
+   - Har complaint submit hone par automatic formatted table notification `gkabeersoomro@gmail.com` par deliver hoti hai.
+10. **🔐 Comprehensive Admin Security & Self-Service Management**:
+    - Default Credentials: `admin@gmail.com` / `admin123`.
+    - Password Show/Hide toggle (👁️ / 🙈) on all password fields.
+    - 2-Step Forgot Password recovery flow with 6-digit verification code.
+    - Admin Settings Modal: Admin apna display name, login email aur password khud customize aur reset kar sakta hai.
+
+---
+
+## 🕒 Release & Build Information
+- **Platform**: AwamiConnect Civic Accountability Engine
+- **Build Timestamp**: 2026-10-24 04:30 PKT (UTC+5)
+- **Status**: Production Ready • Zero Pixel Overflow • Real-Time Firestore Sync
+- **Repository Remote**: `https://github.com/KabirSoomro/AwamiConnect.git`
 
 ---
 

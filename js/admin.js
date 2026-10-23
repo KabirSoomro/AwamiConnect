@@ -45,9 +45,21 @@ function setupAuth() {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const email = document.getElementById("loginEmail").value.trim() || "gkabeersoomro@gmail.com";
+      const password = document.getElementById("loginPassword").value.trim();
+
+      if (!password) {
+        showToast("Please enter your admin password.", "error");
+        return;
+      }
+
+      if (password !== "admin123") {
+        showToast("Incorrect password! (Default password is: admin123)", "error");
+        return;
+      }
+
       const user = { name: "Kabeer Soomro", email: email, role: "moderator" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
-      showToast("Signed in successfully!", "success");
+      showToast("Signed in successfully as Admin!", "success");
       showAdminDashboard(user);
     });
   }

@@ -560,6 +560,15 @@ a:hover {
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
 }
 
+.form-control::placeholder,
+.form-textarea::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
 .form-textarea {
   min-height: 110px;
   resize: vertical;

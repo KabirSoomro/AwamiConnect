@@ -262,9 +262,14 @@ function setupFormSubmission() {
     const title = document.getElementById("complaintTitle").value.trim();
     const desc = document.getElementById("complaintDesc").value.trim();
     const address = document.getElementById("locationAddress").value.trim();
-    const citizenName = document.getElementById("citizenName").value.trim() || "Kabeer Soomro";
-    const citizenPhone = document.getElementById("citizenPhone").value.trim() || "03168465697";
-    const citizenEmail = (document.getElementById("citizenEmail")?.value.trim()) || "gkabeersoomro@gmail.com";
+    
+    const nameInput = document.getElementById("citizenName");
+    const phoneInput = document.getElementById("citizenPhone");
+    const emailInput = document.getElementById("citizenEmail");
+
+    const citizenName = (nameInput && nameInput.value.trim()) || (nameInput && nameInput.placeholder) || "Kabeer Soomro";
+    const citizenPhone = (phoneInput && phoneInput.value.trim()) || (phoneInput && phoneInput.placeholder) || "03168465697";
+    const citizenEmail = (emailInput && emailInput.value.trim()) || (emailInput && emailInput.placeholder) || "gkabeersoomro@gmail.com";
 
     if (!title || !desc || !address) {
       showToast("Please fill in all required fields.", "error");
@@ -310,13 +315,11 @@ function setupFormSubmission() {
       // Open Success Modal
       showSuccessModal(newComplaint);
 
-      // Reset form and re-populate default citizen details
+      // Reset form (keeping inputs empty so light gray placeholders show)
       form.reset();
-      document.getElementById("citizenName").value = "Kabeer Soomro";
-      document.getElementById("citizenPhone").value = "03168465697";
-      if (document.getElementById("citizenEmail")) {
-        document.getElementById("citizenEmail").value = "gkabeersoomro@gmail.com";
-      }
+      if (nameInput) nameInput.value = "";
+      if (phoneInput) phoneInput.value = "";
+      if (emailInput) emailInput.value = "";
       document.getElementById("removeImageBtn").click();
 
     } catch (err) {

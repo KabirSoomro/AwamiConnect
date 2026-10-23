@@ -8,6 +8,7 @@ const AUTH_SESSION_KEY = "awami_admin_auth";
 const ADMIN_CREDS_KEY = "awami_admin_credentials";
 
 const DEFAULT_ADMIN_CREDS = {
+  name: "Admin",
   email: "admin@gmail.com",
   password: "admin123"
 };
@@ -18,7 +19,11 @@ function getAdminCredentials() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.email && parsed.password) {
-        return parsed;
+        return {
+          name: parsed.name || "Admin",
+          email: parsed.email,
+          password: parsed.password
+        };
       }
     }
   } catch (e) {}
@@ -93,7 +98,7 @@ function setupAuth() {
         return;
       }
 
-      const user = { name: "Kabeer Soomro", email: activeCreds.email, role: "super_admin" };
+      const user = { name: activeCreds.name || "Admin", email: activeCreds.email, role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
       showToast("Signed in successfully as Admin!", "success");
       showAdminDashboard(user);
@@ -104,9 +109,9 @@ function setupAuth() {
   if (quickDemoBtn) {
     quickDemoBtn.addEventListener("click", () => {
       const activeCreds = getAdminCredentials();
-      const demoUser = { name: "Kabeer Soomro", email: activeCreds.email, role: "super_admin" };
+      const demoUser = { name: activeCreds.name || "Admin", email: activeCreds.email, role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoUser));
-      showToast("Signed in as Kabeer Soomro (Admin)", "success");
+      showToast("Signed in as " + (activeCreds.name || "Admin"), "success");
       showAdminDashboard(demoUser);
     });
   }
@@ -151,7 +156,7 @@ async function showAdminDashboard(user) {
   const activeCreds = getAdminCredentials();
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("adminPortal").style.display = "block";
-  document.getElementById("officerName").textContent = user.name || "Kabeer Soomro";
+  document.getElementById("officerName").textContent = activeCreds.name || user.name || "Admin";
   const emailDisplay = document.getElementById("officerEmail");
   if (emailDisplay) emailDisplay.textContent = activeCreds.email;
   await loadAdminComplaints();
@@ -269,8 +274,8 @@ function renderTable(complaints) {
         </div>
       </td>
       <td>
-        <div style="font-size: 0.85rem; font-weight: 600;">${c.citizenName || 'Kabeer Soomro'}</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted);">${c.citizenPhone || '03168465697'}</div>
+        <div style="font-size: 0.85rem; font-weight: 600;">${c.citizenName || 'Resident'}</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">${c.citizenPhone || '--'}</div>
       </td>
       <td>
         ${getStatusBadge(c.status)}
@@ -353,7 +358,7 @@ window.openEditModal = function (complaintId) {
   document.getElementById("modalEditId").textContent = complaint.id;
   document.getElementById("modalEditHeading").textContent = complaint.title;
   document.getElementById("modalEditLocation").textContent = `📍 ${complaint.locationName || 'Marked on map'}`;
-  document.getElementById("modalEditCitizen").textContent = `Reported by: ${complaint.citizenName || 'Kabeer Soomro'} (${complaint.citizenPhone || '03168465697'})`;
+  document.getElementById("modalEditCitizen").textContent = `Reported by: ${complaint.citizenName || 'Resident'} (${complaint.citizenPhone || '--'})`;
   document.getElementById("modalEditDesc").textContent = complaint.description;
 
   const photo = document.getElementById("modalEditPhoto");
@@ -413,6 +418,8 @@ function setupSettingsModal() {
 
   function openModal() {
     const creds = getAdminCredentials();
+    const nameInput = document.getElementById("settingsName");
+    if (nameInput) nameInput.value = creds.name || "Admin";
     document.getElementById("settingsEmail").value = creds.email;
     document.getElementById("settingsCurrentPass").value = "";
     document.getElementById("settingsNewPass").value = "";
@@ -432,22 +439,26 @@ function setupSettingsModal() {
     if (e.target === modal) closeModal();
   });
 
-  // Reset to default admin@gmail.com / admin123
+  // Reset to default Admin / admin@gmail.com / admin123
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
-      if (confirm("Reset admin credentials back to default (admin@gmail.com / admin123)?")) {
+      if (confirm("Reset admin credentials back to default (Admin / admin@gmail.com / admin123)?")) {
         saveAdminCredentials(DEFAULT_ADMIN_CREDS);
+        const nameInput = document.getElementById("settingsName");
+        if (nameInput) nameInput.value = DEFAULT_ADMIN_CREDS.name;
         document.getElementById("settingsEmail").value = DEFAULT_ADMIN_CREDS.email;
         document.getElementById("settingsCurrentPass").value = "";
         document.getElementById("settingsNewPass").value = "";
         document.getElementById("settingsConfirmPass").value = "";
 
+        const officerName = document.getElementById("officerName");
+        if (officerName) officerName.textContent = DEFAULT_ADMIN_CREDS.name;
         const emailDisplay = document.getElementById("officerEmail");
         if (emailDisplay) emailDisplay.textContent = DEFAULT_ADMIN_CREDS.email;
         const loginEmail = document.getElementById("loginEmail");
         if (loginEmail) loginEmail.placeholder = DEFAULT_ADMIN_CREDS.email;
 
-        showToast("Credentials restored to default: admin@gmail.com / admin123", "info");
+        showToast("Credentials restored to default: Admin (admin@gmail.com / admin123)", "info");
       }
     });
   }
@@ -456,6 +467,8 @@ function setupSettingsModal() {
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
       const creds = getAdminCredentials();
+      const nameInput = document.getElementById("settingsName");
+      const newName = (nameInput ? nameInput.value.trim() : "") || "Admin";
       const newEmail = document.getElementById("settingsEmail").value.trim().toLowerCase();
       const currentPass = document.getElementById("settingsCurrentPass").value.trim();
       const newPass = document.getElementById("settingsNewPass").value.trim();
@@ -495,23 +508,26 @@ function setupSettingsModal() {
       }
 
       const updatedCreds = {
+        name: newName,
         email: newEmail,
         password: finalPassword
       };
       saveAdminCredentials(updatedCreds);
 
       // Update current session
-      const updatedUser = { name: "Kabeer Soomro", email: newEmail, role: "super_admin" };
+      const updatedUser = { name: newName, email: newEmail, role: "super_admin" };
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(updatedUser));
 
       // Update UI displays
+      const officerName = document.getElementById("officerName");
+      if (officerName) officerName.textContent = newName;
       const officerEmail = document.getElementById("officerEmail");
       if (officerEmail) officerEmail.textContent = newEmail;
       const loginEmail = document.getElementById("loginEmail");
       if (loginEmail) loginEmail.placeholder = newEmail;
 
       closeModal();
-      showToast("Admin credentials updated successfully!", "success");
+      showToast("Admin settings updated successfully!", "success");
     });
   }
 }

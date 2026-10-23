@@ -86,7 +86,7 @@
         <div>
           <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">Department Management Console</h1>
           <p style="color: var(--text-secondary); font-size: 0.95rem;">
-            Logged in as <strong id="officerName" style="color: var(--primary);">Kabeer Soomro</strong> (<span id="officerEmail">admin@gmail.com</span>)
+            Logged in as <strong id="officerName" style="color: var(--primary);">Admin</strong> (<span id="officerEmail">admin@gmail.com</span>)
           </p>
         </div>
 
@@ -302,6 +302,12 @@
         </p>
 
         <form id="adminSettingsForm" onsubmit="return false;">
+          <div class="form-group">
+            <label class="form-label" for="settingsName">Admin Name / Display Title <span class="required">*</span></label>
+            <input type="text" id="settingsName" class="form-control" placeholder="Admin" required>
+            <p class="form-help">The name displayed on your management console (e.g. Admin, Kabeer Soomro, etc.).</p>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="settingsEmail">Admin Email Address <span class="required">*</span></label>
             <input type="email" id="settingsEmail" class="form-control" placeholder="admin@gmail.com" required autocomplete="username">

@@ -12,12 +12,12 @@
 // Console -> Project settings -> General -> Your apps -> Web app -> Config
 // ============================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSy_YOUR_API_KEY_HERE",
-  authDomain: "awamiconnect-demo.firebaseapp.com",
-  projectId: "awamiconnect-demo",
-  storageBucket: "awamiconnect-demo.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456"
+  apiKey: "AIzaSyCnS6bhEBmQJR9rXtkUrgXJbMmHjft0-Yo",
+  authDomain: "awamiconnect.firebaseapp.com",
+  projectId: "awamiconnect",
+  storageBucket: "awamiconnect.firebasestorage.app",
+  messagingSenderId: "902092062301",
+  appId: "1:902092062301:web:350d960a39448d5bab57b4"
 };
 
 // Check if Firebase is actually configured or running in Demo / Local mode
@@ -309,6 +309,48 @@ class CivicDatabaseService {
     return null;
   }
 
+  // Subscribe to real-time complaint updates (Live Firebase onSnapshot)
+  onComplaintsChange(callback) {
+    if (this.isFirebase) {
+      try {
+        return this.firestore.collection("complaints").orderBy("submittedAt", "desc").onSnapshot(snapshot => {
+          const complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          callback(complaints);
+        }, err => {
+          console.warn("Real-time listener fallback:", err);
+          this.getAllComplaints().then(callback);
+        });
+      } catch (e) {
+        console.warn("onSnapshot failed:", e);
+      }
+    }
+    // Multi-tab sync in local mode
+    const handler = () => this.getAllComplaints().then(callback);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }
+
+  // Subscribe to a single complaint real-time
+  onComplaintChange(complaintId, callback) {
+    const cleanId = complaintId.trim().toUpperCase();
+    if (this.isFirebase) {
+      try {
+        return this.firestore.collection("complaints").doc(cleanId).onSnapshot(doc => {
+          if (doc.exists) {
+            callback({ id: doc.id, ...doc.data() });
+          } else {
+            callback(null);
+          }
+        }, err => {
+          console.warn("Single real-time listener error:", err);
+        });
+      } catch (e) {
+        console.warn("Single onSnapshot error:", e);
+      }
+    }
+    return () => {};
+  }
+
   // Delete complaint
   async deleteComplaint(id) {
     if (this.isFirebase) {
@@ -322,6 +364,58 @@ class CivicDatabaseService {
     const updated = all.filter(c => c.id !== id);
     localStorage.setItem(this.storageKey, JSON.stringify(updated));
     return true;
+  }
+
+  // Subscribe to real-time complaint updates (Live Sync across all connected browsers)
+  subscribeComplaints(callback) {
+    if (this.isFirebase) {
+      return this.firestore.collection("complaints").orderBy("submittedAt", "desc").onSnapshot(
+        snapshot => {
+          const complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          callback(complaints);
+        },
+        err => console.warn("Firestore snapshot listener error:", err)
+      );
+    }
+    const handler = () => this.getAllComplaints().then(callback);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }
+
+  // Subscribe to a single complaint in real time
+  subscribeComplaintById(complaintId, callback) {
+    const cleanId = complaintId.trim().toUpperCase();
+    if (this.isFirebase) {
+      return this.firestore.collection("complaints").doc(cleanId).onSnapshot(
+        doc => {
+          if (doc.exists) callback({ id: doc.id, ...doc.data() });
+          else callback(null);
+        },
+        err => console.warn("Firestore doc listener error:", err)
+      );
+    }
+    const handler = () => this.getComplaintById(cleanId).then(callback);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }
+
+  // Upload photo directly to Firebase Cloud Storage (returns public HTTPS URL)
+  async uploadImageToStorage(file, filename) {
+    if (this.isFirebase && this.storage) {
+      try {
+        const storageRef = this.storage.ref(`complaints/${Date.now()}_${filename || 'photo.jpg'}`);
+        const snapshot = await storageRef.put(file);
+        return await snapshot.ref.getDownloadURL();
+      } catch (err) {
+        console.warn("Firebase Storage upload error, falling back to compressed data:", err);
+      }
+    }
+    return null;
+  }
+
+  // Clear all dummy data to start completely fresh with clean database
+  clearDummyData() {
+    localStorage.setItem(this.storageKey, JSON.stringify([]));
   }
 
   // Reset to original demo data anytime

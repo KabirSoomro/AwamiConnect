@@ -28,8 +28,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Fetch all complaints
+  // Fetch all complaints and subscribe to real-time cloud updates
   await loadDashboardData();
+  if (window.dbService && typeof window.dbService.onComplaintsChange === "function") {
+    window.dbService.onComplaintsChange((updatedComplaints) => {
+      if (Array.isArray(updatedComplaints)) {
+        allComplaints = updatedComplaints;
+        renderMetrics(allComplaints);
+        renderMapMarkers(document.getElementById("mapStatusFilter")?.value || "all");
+        renderCharts(allComplaints);
+        renderHotspots(allComplaints);
+        renderRecentResolved(allComplaints);
+      }
+    });
+  }
 
   // Setup Map filter listener
   const mapFilter = document.getElementById("mapStatusFilter");

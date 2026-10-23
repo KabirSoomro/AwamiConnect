@@ -5,6 +5,7 @@
 let trackMapInstance = null;
 let trackMarker = null;
 let currentComplaint = null;
+let trackUnsubscribe = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   setupSearchForm();
@@ -79,6 +80,20 @@ async function loadComplaintDetails(complaintId) {
     // Make container visible BEFORE initializing map so Leaflet measures non-zero dimensions
     resultCard.style.display = "block";
     renderComplaint(complaint);
+
+    // Subscribe to live updates for this complaint
+    if (typeof trackUnsubscribe === "function") {
+      trackUnsubscribe();
+      trackUnsubscribe = null;
+    }
+    if (window.dbService && typeof window.dbService.onComplaintChange === "function") {
+      trackUnsubscribe = window.dbService.onComplaintChange(complaintId, (liveComplaint) => {
+        if (liveComplaint) {
+          currentComplaint = liveComplaint;
+          renderComplaint(liveComplaint);
+        }
+      });
+    }
 
     // Multi-tier post-display size invalidation to force complete tile rendering
     requestAnimationFrame(() => {

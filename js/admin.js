@@ -96,11 +96,23 @@ function showLoginScreen() {
   document.getElementById("adminPortal").style.display = "none";
 }
 
+let adminUnsubscribe = null;
+
 async function showAdminDashboard(user) {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("adminPortal").style.display = "block";
   document.getElementById("officerName").textContent = user.name || "Municipal Officer";
   await loadAdminComplaints();
+
+  if (!adminUnsubscribe && window.dbService && typeof window.dbService.onComplaintsChange === "function") {
+    adminUnsubscribe = window.dbService.onComplaintsChange((updated) => {
+      if (Array.isArray(updated)) {
+        adminComplaints = updated;
+        updateAdminMetrics(adminComplaints);
+        filterAndRenderTable();
+      }
+    });
+  }
 }
 
 // 2. Fetch and Display Complaints

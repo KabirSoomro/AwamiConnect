@@ -302,6 +302,9 @@ function setupFormSubmission() {
 
       await window.dbService.createComplaint(newComplaint);
 
+      // Trigger automated email alert to gkabeersoomro@gmail.com
+      sendEmailNotification(newComplaint);
+
       // Open Success Modal
       showSuccessModal(newComplaint);
 
@@ -341,4 +344,46 @@ function showSuccessModal(complaint) {
   closeBtn.onclick = () => modal.classList.remove("open");
 
   modal.classList.add("open");
+}
+
+// 7. Automated Email Notification to gkabeersoomro@gmail.com
+async function sendEmailNotification(complaint) {
+  const targetEmail = "gkabeersoomro@gmail.com";
+  try {
+    const payload = {
+      _subject: `🚨 [AwamiConnect] New Complaint: ${complaint.id} - ${complaint.title}`,
+      _template: "table",
+      _captcha: "false",
+      "Tracking ID": complaint.id,
+      "Complaint Title": complaint.title,
+      "Category": `${complaint.categoryIcon || "📌"} ${complaint.categoryLabel || complaint.category}`,
+      "Assigned Department": complaint.department || "Municipal Services",
+      "Citizen Name": complaint.citizenName,
+      "Citizen Contact": complaint.citizenPhone,
+      "Location Area": complaint.locationName,
+      "GPS Coordinates": `${complaint.lat}, ${complaint.lng}`,
+      "Google Maps Link": `https://www.google.com/maps?q=${complaint.lat},${complaint.lng}`,
+      "Description": complaint.description,
+      "Submission Time": new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" }),
+      "Live Tracking URL": `${window.location.origin}/track.html?id=${complaint.id}`
+    };
+
+    const response = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json().catch(() => null);
+    if (response.ok && result && result.success !== "false") {
+      console.log("Email notification dispatched successfully to:", targetEmail);
+    } else {
+      console.warn("Email dispatch notice:", result ? result.message : "Status " + response.status);
+    }
+  } catch (err) {
+    console.warn("Could not dispatch email notification (non-blocking):", err);
+  }
 }

@@ -41,14 +41,18 @@
 10. **🔐 Comprehensive Admin Security & Self-Service Management**:
     - Default Credentials: `admin@gmail.com` / `admin123`.
     - Password Show/Hide toggle (👁️ / 🙈) on all password fields.
-    - 2-Step Forgot Password recovery flow with 6-digit verification code.
+    - Official Password Reset Link dispatch directly to Admin email inbox with secure 60-minute token expiration & instant direct test shortcut.
     - Admin Settings Modal: Admin apna display name, login email aur password khud customize aur reset kar sakta hai.
+11. **📐 Unified Layout & Footer Design**:
+    - Har page par consistent semantic footer (`index.html`, `report.html`, `track.html`, `admin.html`).
+    - Footer is OK: Zero pixel overflow, 100% mobile, tablet aur desktop responsive.
 
 ---
 
 ## 🕒 Release & Build Information
 - **Platform**: AwamiConnect Civic Accountability Engine
-- **Build Timestamp**: 2026-10-24 04:30 PKT (UTC+5)
+- **Build Timestamp**: 2026-10-24 16:05 PKT (UTC+5)
+- **Footer Status**: Verified & OK across all pages
 - **Status**: Production Ready • Zero Pixel Overflow • Real-Time Firestore Sync
 - **Repository Remote**: `https://github.com/KabirSoomro/AwamiConnect.git`
 
@@ -91,7 +95,7 @@ Yeh project **100% ready-to-run** hai. Is mein kisi Node.js ya server installati
    - `index.html` par maps aur charts dekhein.
    - `report.html` se nayi complaint submit karein.
    - `track.html?id=AC-2026-001` par status aur confirmation check karein.
-   - `admin.html` par **"1-Click Moderator Demo Access"** se login karke status update karein.
+   - `admin.html` par default credentials (`admin@gmail.com` / `admin123`) se login karke status update karein.
 
 ### Option 2 (VS Code Live Server - Recommended):
 1. VS Code mein folder open karein.
